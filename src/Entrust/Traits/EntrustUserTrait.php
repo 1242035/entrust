@@ -7,7 +7,6 @@
  * @license MIT
  * @package Zizaco\Entrust
  */
-
 use Illuminate\Cache\TaggableStore;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -15,11 +14,7 @@ use InvalidArgumentException;
 
 trait EntrustUserTrait
 {
-    /**
-     * Big block of caching functionality.
-     *
-     * @return mixed Roles
-     */
+    //Big block of caching functionality.
     public function cachedRoles()
     {
         $userPrimaryKey = $this->primaryKey;
@@ -31,21 +26,14 @@ trait EntrustUserTrait
         }
         else return $this->roles()->get();
     }
-
-    /**
-     * {@inheritDoc}
-     */
     public function save(array $options = [])
     {   //both inserts and updates
+        $result = parent::save($options);
         if(Cache::getStore() instanceof TaggableStore) {
             Cache::tags(Config::get('entrust.role_user_table'))->flush();
         }
-        return parent::save($options);
+        return $result;
     }
-
-    /**
-     * {@inheritDoc}
-     */
     public function delete(array $options = [])
     {   //soft or hard
         $result = parent::delete($options);
@@ -54,10 +42,6 @@ trait EntrustUserTrait
         }
         return $result;
     }
-
-    /**
-     * {@inheritDoc}
-     */
     public function restore()
     {   //soft delete undo's
         $result = parent::restore();
@@ -66,7 +50,7 @@ trait EntrustUserTrait
         }
         return $result;
     }
-
+    
     /**
      * Many-to-Many relations with Role.
      *
@@ -89,7 +73,7 @@ trait EntrustUserTrait
         parent::boot();
 
         static::deleting(function($user) {
-            if (!method_exists(Config::get('auth.providers.users.model'), 'bootSoftDeletes')) {
+            if (!method_exists(Config::get('auth.model'), 'bootSoftDeletes')) {
                 $user->roles()->sync([]);
             }
 
@@ -298,24 +282,10 @@ trait EntrustUserTrait
     public function detachRoles($roles=null)
     {
         if (!$roles) $roles = $this->roles()->get();
-
+        
         foreach ($roles as $role) {
             $this->detachRole($role);
         }
-    }
-
-    /**
-     *Filtering users according to their role 
-     *
-     *@param string $role
-     *@return users collection
-     */
-    public function scopeWithRole($query, $role)
-    {
-        return $query->whereHas('roles', function ($query) use ($role)
-        {
-            $query->where('name', $role);
-        });
     }
 
 }
